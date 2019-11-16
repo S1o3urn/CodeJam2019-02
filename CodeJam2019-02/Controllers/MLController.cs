@@ -19,6 +19,7 @@ namespace CodeJam2019_02.Controllers
 
         // Holds the filepath of a input file
         private string filePath;
+        private string fileName;
 
         /// Trains the preprocessed data
         public IActionResult TrainModel()
@@ -38,15 +39,15 @@ namespace CodeJam2019_02.Controllers
         /// </summary>
         /// <param name="ufile"></param>
         /// <returns></returns>
-        private async Task<bool> UploadFile(IFormFile ufile)
+        private bool UploadFile(IFormFile ufile)
         {
             if (ufile != null && ufile.Length > 0)
             {
-                var fileName = Path.GetFileName(ufile.FileName);
+                fileName = Path.GetFileName(ufile.FileName);
                 filePath = Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\InputFiles", fileName);
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
-                    await ufile.CopyToAsync(fileStream);
+                    ufile.CopyTo(fileStream);
                 }
                 return true;
             }
@@ -59,68 +60,92 @@ namespace CodeJam2019_02.Controllers
         /// <param name="files"></param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<IActionResult> ProcessDataAsync(List<IFormFile> files)
+        public IActionResult ProcessData(List<IFormFile> file1, List<IFormFile> file2, List<IFormFile> file3)
         {
             //TODO: Store files into SQL database
-            foreach (var file in files)
+            List<List<IFormFile>> files = new List<List<IFormFile>>()
             {
-                // Upload file to website folder
-                var uploadFile = await UploadFile(file);
-                if (uploadFile != true)
-                {
-                    throw new Exception(file.FileName + " failed to be uploaded");
-                }
+                file1,
+                file2,
+                file3
+            };
 
-                // Create dataTable to hold csv file
-                DataTable csvData = new DataTable();
-
-                //Read csv into dataTable
-                try
+            foreach (var aFiles in files)
+            {
+                foreach (var file in aFiles)
                 {
-                    using (TextFieldParser csvReader = new TextFieldParser(filePath))
+                    // Upload file to website folder
+                    var uploadFile = UploadFile(file);
+                    if (uploadFile != true)
                     {
-                        csvReader.SetDelimiters(new string[] { "," });
-                        csvReader.HasFieldsEnclosedInQuotes = true;
-                        string[] colFields = csvReader.ReadFields();
-                        foreach (string column in colFields)
+                        throw new Exception(file.FileName + " failed to be uploaded");
+                    }
+
+                    // Create dataTable to hold csv file
+                    DataTable csvData = new DataTable();
+
+                    //Read csv into dataTable
+                    try
+                    {
+                        using (TextFieldParser csvReader = new TextFieldParser(filePath))
                         {
-                            DataColumn datecolumn = new DataColumn(column);
-                            datecolumn.AllowDBNull = true;
-                            csvData.Columns.Add(datecolumn);
-                        }
-                        while (!csvReader.EndOfData)
-                        {
-                            string[] fieldData = csvReader.ReadFields();
-                            //Making empty value as null
-                            for (int i = 0; i < fieldData.Length; i++)
+                            csvReader.SetDelimiters(new string[] { "," });
+                            csvReader.HasFieldsEnclosedInQuotes = true;
+                            string[] colFields = csvReader.ReadFields();
+                            foreach (string column in colFields)
                             {
-                                if (fieldData[i] == "")
-                                {
-                                    fieldData[i] = null;
-                                }
+                                DataColumn datecolumn = new DataColumn(column);
+                                datecolumn.AllowDBNull = true;
+                                csvData.Columns.Add(datecolumn);
                             }
-                            csvData.Rows.Add(fieldData);
+                            while (!csvReader.EndOfData)
+                            {
+                                string[] fieldData = csvReader.ReadFields();
+                                //Making empty value as null
+                                for (int i = 0; i < fieldData.Length; i++)
+                                {
+                                    if (fieldData[i] == "")
+                                    {
+                                        fieldData[i] = null;
+                                    }
+                                }
+                                csvData.Rows.Add(fieldData);
+                            }
+                        }
+                    }
+                    catch (Exception BadInputFile)
+                    {
+                        // Error converting csv to dataTable
+                        throw new Exception("Error converting csv to dataTable", BadInputFile);
+                    }
+
+                    // Upload file to sql
+                    using (SqlConnection dbConnection = new SqlConnection("Data Source=codejam2019db.database.windows.net;Initial Catalog=Project-02DB;User id=CodeJamAdmin;Password=CodeJam2019;"))
+                    {
+
+
+                        dbConnection.Open();
+
+                        // Check if test table already has data
+                        SqlCommand comm = new SqlCommand("SELECT COUNT(*) FROM " + fileName + "Test", dbConnection);
+                        Int32 count = (Int32)comm.ExecuteScalar();
+
+                        if(count > 0)
+                        {
+                            //Delete content
+                            comm = new SqlCommand("DELETE * FROM " + fileName + "Test", dbConnection);
+                            comm.ExecuteNonQuery();
+                        }
+
+                        using (SqlBulkCopy s = new SqlBulkCopy(dbConnection))
+                        {
+                            s.DestinationTableName = fileName + "Test";
+                            foreach (var column in csvData.Columns)
+                                s.ColumnMappings.Add(column.ToString(), column.ToString());
+                            s.WriteToServer(csvData);
                         }
                     }
                 }
-                catch(Exception BadInputFile)
-                {
-                    // Error converting csv to dataTable
-                    throw new Exception("Error converting csv to dataTable", BadInputFile);
-                }
-
-                // Upload file to sql
-                //using (SqlConnection dbConnection = new SqlConnection("Data Source=ProductHost;Initial Catalog=yourDB;Integrated Security=SSPI;"))
-                //{
-                //    dbConnection.Open();
-                //    using (SqlBulkCopy s = new SqlBulkCopy(dbConnection))
-                //    {
-                //        s.DestinationTableName = "Your table name";
-                //        foreach (var column in csvData.Columns)
-                //            s.ColumnMappings.Add(column.ToString(), column.ToString());
-                //        s.WriteToServer(csvData);
-                //    }
-                //}
             }
             //TODO: Preprocess all three tables
 
