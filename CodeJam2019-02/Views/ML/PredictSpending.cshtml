@@ -9,10 +9,12 @@
     </div>
 
     <div class="row">
-        <form method="post" enctype="multipart/form-data" asp-action="ProcessData" asp-controller="ML">
+        <form method="post" enctype="multipart/form-data" asp-action="ProcessDataAsync" asp-controller="ML">
             <div>
                 <p>Upload one or more files using this form:</p>
-                <input type="file" name="files" />
+                <input type="file" name="file1" />
+                <input type="file" name="file2" />
+                <input type="file" name="file3" />
             </div>
             <div>
                 <input type="submit" value="Upload" />
