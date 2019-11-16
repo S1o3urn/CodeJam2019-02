@@ -3,5 +3,22 @@
     ViewData["Title"] = "PredictSpending";
 }
 
-<h2>PredictSpending</h2>
+<div>
+    <div class="row">
+        <h2>Mistplay Spending Prediction</h2>
+    </div>
+
+    <div class="row">
+        <form method="post" enctype="multipart/form-data" asp-action="ProcessData" asp-controller="ML">
+            <div>
+                <p>Upload one or more files using this form:</p>
+                <input type="file" name="files" />
+            </div>
+            <div>
+                <input type="submit" value="Upload" />
+            </div>
+        </form>
+    </div>
+</div>
+
 
