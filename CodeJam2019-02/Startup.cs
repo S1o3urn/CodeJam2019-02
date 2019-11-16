@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.ML;
+using CodeJam2019_02.MLModels;
 
 namespace CodeJam2019_02
 {
@@ -33,6 +35,8 @@ namespace CodeJam2019_02
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            //TODO: Change model name
+            services.AddPredictionEnginePool<MistPlayData, MistPlayDataPrediction>().FromFile(modelName: "SentimentAnalysisModel", filePath: "MLModels/sentiment_model.zip", watchForChanges: true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

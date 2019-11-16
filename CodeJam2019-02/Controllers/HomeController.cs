@@ -8,32 +8,25 @@ using CodeJam2019_02.Models;
 
 namespace CodeJam2019_02.Controllers
 {
+    /// <summary>
+    /// Controller for Landing Page
+    /// </summary>
     public class HomeController : Controller
     {
+
+        /// <summary>
+        /// Returns the landing page
+        /// </summary>
+        /// <returns></returns>
         public IActionResult Index()
         {
             return View();
         }
 
-        public IActionResult About()
-        {
-            ViewData["Message"] = "Your application description page.";
-
-            return View();
-        }
-
-        public IActionResult Contact()
-        {
-            ViewData["Message"] = "Your contact page.";
-
-            return View();
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
+        /// <summary>
+        /// Error handling
+        /// </summary>
+        /// <returns></returns>
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
