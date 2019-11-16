@@ -127,19 +127,19 @@ namespace CodeJam2019_02.Controllers
                         dbConnection.Open();
 
                         // Check if test table already has data
-                        SqlCommand comm = new SqlCommand("SELECT COUNT(*) FROM " + fileName + "Test", dbConnection);
+                        SqlCommand comm = new SqlCommand("SELECT COUNT(*) FROM [dbo].[" + fileName + "Test]", dbConnection);
                         Int32 count = (Int32)comm.ExecuteScalar();
 
-                        if(count > 0)
+                        if (count > 0)
                         {
                             //Delete content
-                            comm = new SqlCommand("DELETE * FROM " + fileName + "Test", dbConnection);
+                            comm = new SqlCommand("DELETE * FROM [dbo].[" + fileName + "Test]", dbConnection);
                             comm.ExecuteNonQuery();
                         }
 
                         using (SqlBulkCopy s = new SqlBulkCopy(dbConnection))
                         {
-                            s.DestinationTableName = fileName + "Test";
+                            s.DestinationTableName = "[dbo].[" + fileName + "Test]";
                             foreach (var column in csvData.Columns)
                                 s.ColumnMappings.Add(column.ToString(), column.ToString());
                             s.WriteToServer(csvData);
