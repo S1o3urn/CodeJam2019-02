@@ -152,40 +152,61 @@ namespace CodeJam2019_02.Controllers
                 }
             }
 
-            // Preprocess all three tables
+            // Preprocess all three tables and output to dataTable
+            DataTable preProcessedData = new DataTable();
 
             //execute sql script
             using (SqlConnection dbConnection = new SqlConnection("Data Source=codejam2019db.database.windows.net;Initial Catalog=Project-02DB;User id=CodeJamAdmin;Password=CodeJam2019;"))
             {
 
-
-                dbConnection.Open();
-
                 // Check if test table already has data
-                string sql = "Select [UserTable].UserID" +
-                    ", substring([UserTable].BinAge,2,2) as MinAge" +
-                    ",substring([UserTable].BinAge, 8,2) as MaxAge" +
-                    ",substring([UserTable].CountryID, 9,1) as CountryID" +
-                    ",datepart(year, [UserTable].GameInstallDate) as GameInstallYear" +
-                    ",datepart(month, [UserTable].GameInstallDate) as GameInstallMonth" +
-                    ",datepart(day, [UserTable].GameInstallDate) as GameInstallDay" +
-                    ",datepart(hour, [UserTable].GameInstallDate) as GameInstallHour" +
-                    ",[UserTable].Gender,substring([UserTable].OSVersion,1,1) as OSVersion" +
-                    ",case when substring([UserTable].OSVersion,3,1) like '' then '0' else substring([UserTable].OSVersion,3,1) end as OSUpdate" +
-                    ",case when substring([UserTable].OSVersion,5,1) like '' then '0' else substring([UserTable].OSVersion,5,1) end as OSPatch" +
-                    ",[UserTable].Ref" +
-                    ",ISNULL(substring([UserTable].SourceID, 8,2)" +
+                string sql = "Select [user_tableTest].UserID" +
+                    ", substring([user_tableTest].BinAge,2,2) as MinAge" +
+                    ",substring([user_tableTest].BinAge, 8,2) as MaxAge" +
+                    ",substring([user_tableTest].CountryID, 9,1) as CountryID" +
+                    ",datepart(year, [user_tableTest].GameInstallDate) as GameInstallYear" +
+                    ",datepart(month, [user_tableTest].GameInstallDate) as GameInstallMonth" +
+                    ",datepart(day, [user_tableTest].GameInstallDate) as GameInstallDay" +
+                    ",datepart(hour, [user_tableTest].GameInstallDate) as GameInstallHour" +
+                    ",[UserTable].Gender,substring([user_tableTest].OSVersion,1,1) as OSVersion" +
+                    ",case when substring([user_tableTest].OSVersion,3,1) like '' then '0' else substring([user_tableTest].OSVersion,3,1) end as OSUpdate" +
+                    ",case when substring([user_tableTest].OSVersion,5,1) like '' then '0' else substring([user_tableTest].OSVersion,5,1) end as OSPatch" +
+                    ",[user_tableTest].Ref" +
+                    ",ISNULL(substring([user_tableTest].SourceID, 8,2)" +
                     ",cast(-1 as nvarchar)) as SourceID" +
-                    ",ISNULL([UserAppsStatistics].nShoppingApps" +
+                    ",ISNULL([user_apps_statisticsTest].nShoppingApps" +
                     ",cast(0 as nvarchar)) as nShoppingApps" +
-                    ",ISNULL([UserAppsStatistics].nTotalApps" +
+                    ",ISNULL([user_apps_statisticsTest].nTotalApps" +
                     ",cast(0 as nvarchar)) as nTotalApps" +
-                    ",case when[UserPurchaseEvents].AmountSpend IS NULL then '0' else '1' end as AmountSpend" +
-                    " From [dbo].[UserTable]left join[dbo].[UserAppsStatistics] on[dbo].[UserTable].UserID = [dbo].[UserAppsStatistics].UserIDleft join[dbo].[UserPurchaseEvents] on[dbo].[UserTable].UserID = [dbo].[UserPurchaseEvents].UserIDWhere[dbo].[UserTable].UserID<> ''and substring([UserTable].BinAge, 8,2) <> ''and[UserTable].Gender IS NOT NULL";
+                    ",case when[user_purchase_eventsTest].AmountSpend IS NULL then '0' else '1' end as AmountSpend" +
+                    " From [dbo].[user_tableTest] left join [dbo].[user_apps_statisticsTest] on [dbo].[user_tableTest].UserID = [dbo].[user_apps_statisticsTest].UserID" +
+                    " left join [dbo].[user_purchase_eventsTest] on [dbo].[user_tableTest].UserID = [dbo].[user_purchase_eventsTest].UserID" +
+                    " Where [dbo].[user_tableTest].UserID <> '' and substring([user_tableTest].BinAge, 8,2) <> '' and [user_tableTest].Gender IS NOT NULL";
+
                 SqlCommand comm = new SqlCommand(sql, dbConnection);
-                Int32 count = (Int32)comm.ExecuteScalar();
+                dbConnection.Open();
+                SqlDataReader reader = comm.ExecuteReader();
+                try
+                {
+                    int count = 0;
+                    while (reader.Read())
+                    {
+                        DataRow aRow  = preProcessedData.NewRow();
+                        aRow[count] = reader.GetString(0);
+                        preProcessedData.Rows.Add(aRow);
+                        count++;
+                    }
+                }
+                finally
+                {
+                    // Always call Close when done reading.
+                    reader.Close();
+                }
             }
-            //return csv file
+
+            //Store dataTable
+            TempData["PreProcessedData"] = preProcessedData;
+
             return View();
         }
     }
