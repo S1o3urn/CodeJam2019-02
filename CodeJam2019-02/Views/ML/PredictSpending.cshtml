@@ -4,20 +4,64 @@
 }
 
 <div>
-    <div class="row">
-        <h2>Mistplay Spending Prediction</h2>
-    </div>
 
     <div class="row">
+
+        <div class="col-md-12">
+            <h2><b>Mistplay Spending Prediction</b></h2>
+        </div>
+
         <form method="post" enctype="multipart/form-data" asp-action="ProcessData" asp-controller="ML">
             <div>
-                <p>Upload one or more files using this form:</p>
-                <input type="file" name="file1" />
-                <input type="file" name="file2" />
-                <input type="file" name="file3" />
+                <div class="row">
+                    <div class="col-md-12">
+                        <p>Upload Test Tables</p>
+                    </div>
+                </div>
+
+                <div class="row" style="border-color: black; border-bottom-width:1px;">
+                    <div class="col-sm-3">
+                        <h3>UserAppStatistics</h3>
+                        <input type="file" name="file1" />
+                    </div>
+
+                    <div class="col-sm-9">
+                        <p>Please make sure row headers are named as followed:</p>
+                        <p>RowID - nTopGrossingApps - nTotalApps - nShoppingApps - UserID</p>
+                    </div>
+                </div>
+
+                <div class="row" style="border-color: black; border-bottom-width:1px;">
+                    <div class="col-sm-3">
+                        <h3>UserPurchaseEvents</h3>
+                        <input type="file" name="file2" />
+                    </div>
+
+                    <div class="col-sm-9">
+                        <p>Please make sure row headers are named as followed:</p>
+                        <p>RowID - Date - nTotalApps - AmountSpend - UserID</p>
+                    </div>
+                </div>
+
+                <div class="row" style="border-color: black; border-bottom-width:1px;">
+                    <div class="col-sm-3">
+                        <h3>UserTable</h3>
+                        <input type="file" name="file3" />
+                    </div>
+
+                    <div class="col-sm-9">
+                        <p>Please make sure row headers are named as followed:</p>
+                        <p>RowID - OSVersion - InstalledMistplay - Gender - Ref</p>
+                        <p>InstalledMstplayTimezone - GameInstallDate - GameInstallTimezone - UserID - SourceID</p>
+                        <p>- CountryID - BinAge - DeviceID</p>
+                    </div>
+                </div>
             </div>
-            <div>
-                <input type="submit" value="Upload" />
+
+            <div class="row">
+                <div class="col-md-12">
+                    <btn><input type="submit" value="Upload" /></btn>
+                </div>
             </div>
         </form>
     </div>

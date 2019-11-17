@@ -62,7 +62,7 @@ namespace CodeJam2019_02.Controllers
         [HttpPost]
         public IActionResult ProcessData(List<IFormFile> file1, List<IFormFile> file2, List<IFormFile> file3)
         {
-            //TODO: Store files into SQL database
+            // Store files into SQL database
             List<List<IFormFile>> files = new List<List<IFormFile>>()
             {
                 file1,
@@ -127,19 +127,23 @@ namespace CodeJam2019_02.Controllers
                         dbConnection.Open();
 
                         // Check if test table already has data
-                        SqlCommand comm = new SqlCommand("SELECT COUNT(*) FROM [dbo].[" + fileName + "Test]", dbConnection);
+                        string sql = "SELECT COUNT(*) FROM [dbo].[" + fileName.Substring(0, fileName.Length - 4) + "Test]";
+                        SqlCommand comm = new SqlCommand(sql, dbConnection);
                         Int32 count = (Int32)comm.ExecuteScalar();
 
                         if (count > 0)
                         {
                             //Delete content
-                            comm = new SqlCommand("DELETE * FROM [dbo].[" + fileName + "Test]", dbConnection);
+                            sql = "DELETE * FROM [dbo].[" + fileName.Substring(0, fileName.Length - 4) + "Test]";
+                            comm = new SqlCommand(sql, dbConnection);
                             comm.ExecuteNonQuery();
                         }
 
+                        // Copy data into test sql tables
                         using (SqlBulkCopy s = new SqlBulkCopy(dbConnection))
                         {
-                            s.DestinationTableName = "[dbo].[" + fileName + "Test]";
+                            sql = "[dbo].[" + fileName.Substring(0, fileName.Length - 4) + "Test]";
+                            s.DestinationTableName = sql;
                             foreach (var column in csvData.Columns)
                                 s.ColumnMappings.Add(column.ToString(), column.ToString());
                             s.WriteToServer(csvData);
@@ -147,9 +151,42 @@ namespace CodeJam2019_02.Controllers
                     }
                 }
             }
-            //TODO: Preprocess all three tables
 
-            return Ok();
+            // Preprocess all three tables
+
+            //execute sql script
+            using (SqlConnection dbConnection = new SqlConnection("Data Source=codejam2019db.database.windows.net;Initial Catalog=Project-02DB;User id=CodeJamAdmin;Password=CodeJam2019;"))
+            {
+
+
+                dbConnection.Open();
+
+                // Check if test table already has data
+                string sql = "Select [UserTable].UserID" +
+                    ", substring([UserTable].BinAge,2,2) as MinAge" +
+                    ",substring([UserTable].BinAge, 8,2) as MaxAge" +
+                    ",substring([UserTable].CountryID, 9,1) as CountryID" +
+                    ",datepart(year, [UserTable].GameInstallDate) as GameInstallYear" +
+                    ",datepart(month, [UserTable].GameInstallDate) as GameInstallMonth" +
+                    ",datepart(day, [UserTable].GameInstallDate) as GameInstallDay" +
+                    ",datepart(hour, [UserTable].GameInstallDate) as GameInstallHour" +
+                    ",[UserTable].Gender,substring([UserTable].OSVersion,1,1) as OSVersion" +
+                    ",case when substring([UserTable].OSVersion,3,1) like '' then '0' else substring([UserTable].OSVersion,3,1) end as OSUpdate" +
+                    ",case when substring([UserTable].OSVersion,5,1) like '' then '0' else substring([UserTable].OSVersion,5,1) end as OSPatch" +
+                    ",[UserTable].Ref" +
+                    ",ISNULL(substring([UserTable].SourceID, 8,2)" +
+                    ",cast(-1 as nvarchar)) as SourceID" +
+                    ",ISNULL([UserAppsStatistics].nShoppingApps" +
+                    ",cast(0 as nvarchar)) as nShoppingApps" +
+                    ",ISNULL([UserAppsStatistics].nTotalApps" +
+                    ",cast(0 as nvarchar)) as nTotalApps" +
+                    ",case when[UserPurchaseEvents].AmountSpend IS NULL then '0' else '1' end as AmountSpend" +
+                    " From [dbo].[UserTable]left join[dbo].[UserAppsStatistics] on[dbo].[UserTable].UserID = [dbo].[UserAppsStatistics].UserIDleft join[dbo].[UserPurchaseEvents] on[dbo].[UserTable].UserID = [dbo].[UserPurchaseEvents].UserIDWhere[dbo].[UserTable].UserID<> ''and substring([UserTable].BinAge, 8,2) <> ''and[UserTable].Gender IS NOT NULL";
+                SqlCommand comm = new SqlCommand(sql, dbConnection);
+                Int32 count = (Int32)comm.ExecuteScalar();
+            }
+            //return csv file
+            return View();
         }
     }
 }
